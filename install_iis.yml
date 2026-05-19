@@ -1,3 +1,8 @@
+---
+- name: Install IIS on Windows
+  hosts: windows
+  gather_facts: no
+
   tasks:
     - name: Install iis
       ansible.windows.win_feature:
@@ -21,4 +26,4 @@
 
     - name: Show website address
       ansible.builtin.debug:
-        msg: http://{{ ansible_host }}
+        msg: "http://{{ ansible_host }}"
