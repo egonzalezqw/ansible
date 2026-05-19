@@ -8,4 +8,4 @@
         category_names:
           - SecurityUpdates
           - CriticalUpdates
-        reboot: true
+        reboot: "{{ reboot_server | default(true) }}"
