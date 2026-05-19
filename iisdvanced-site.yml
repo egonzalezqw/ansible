@@ -1,46 +1,58 @@
- ---
-    # tasks file for iis_simple
+---
+- hosts: windows
+  name: IIS Playbook
+
+  vars:
+    iis_sites:
+      - name: 'Ansible Playbook Test'
+        port: '8080'
+        path: 'C:\sites\playbooktest'
+
+      - name: 'Ansible Playbook Test 2'
+        port: '8081'
+        path: 'C:\sites\playbooktest2'
+
+  tasks:
 
     - name: Install IIS
-      win_feature:
+      ansible.windows.win_feature:
         name: Web-Server
         state: present
 
     - name: Create site directory structure
-      win_file:
+      ansible.windows.win_file:
         path: "{{ item.path }}"
         state: directory
-      with_items: "{{ iis_sites }}"
+      loop: "{{ iis_sites }}"
 
     - name: Create IIS site
-      win_iis_website:
+      community.windows.win_iis_website:
         name: "{{ item.name }}"
         state: started
         port: "{{ item.port }}"
         physical_path: "{{ item.path }}"
-      with_items: "{{ iis_sites }}"
-      notify: restart iis service
+      loop: "{{ iis_sites }}"
 
     - name: Open port for site on the firewall
-      win_firewall_rule:
+      community.windows.win_firewall_rule:
         name: "iisport{{ item.port }}"
-        enable: yes
+        enable: true
         state: present
         localport: "{{ item.port }}"
         action: Allow
         direction: In
         protocol: Tcp
-      with_items: "{{ iis_sites }}"
+      loop: "{{ iis_sites }}"
 
-    - name: Template simple web site to iis_site_path as index.html
-      win_template:
-        src: 'index.html.j2'
-        dest: '{{ item.path }}\index.html'
-      with_items: "{{ iis_sites }}"
+    - name: Create index.html
+      ansible.windows.win_copy:
+        content: "<h1>Hello from Ansible IIS</h1>"
+        dest: "{{ item.path }}\\index.html"
+      loop: "{{ iis_sites }}"
 
     - name: Show website addresses
-      debug:
+      ansible.builtin.debug:
         msg: "{{ item }}"
       loop:
-        - http://{{ ansible_host }}:8080
-        - http://{{ ansible_host }}:8081
+        - "http://{{ ansible_host }}:8080"
+        - "http://{{ ansible_host }}:8081"
